@@ -7,11 +7,11 @@ from matplotlib.projections.polar import PolarAxes
 from typing import cast
 from astral import LocationInfo
 from astral.sun import sun
-from datetime import datetime
+from datetime import datetime, time
 import pytz
 
 # Define target date
-target_date = datetime.today()
+target_date: datetime = datetime.today()
 # target_date = datetime(2025, 2, 16)
 
 # Define twilight depression (angle below horizon for dawn/dusk calculation)
@@ -49,7 +49,7 @@ print(f"Sunrise: {sun_info['sunrise']}, Sunset: {sun_info['sunset']}")
 print(f"Dawn: {sun_info['dawn']}, Dusk: {sun_info['dusk']}")
 
 # Extract times
-times = {
+times: dict = {
     "midnight": datetime.strptime("00:00", "%H:%M").time(),
     "noon": datetime.strptime("12:00", "%H:%M").time(),
     "sunrise": sun_info['sunrise'].time(),
@@ -59,7 +59,7 @@ times = {
 }
 
 # Convert time to polar angle (0:00 at top, 12:00 at bottom)
-def time_to_angle(time):
+def time_to_angle(time: time) -> float:
     return (time.hour + time.minute / 60) / 24 * 2 * np.pi
 
 
