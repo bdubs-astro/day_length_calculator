@@ -1,5 +1,5 @@
 '''
-Create a plot showing the daylight hours for the current date.
+Create a plot showing the daylight hours for a given date and location.
 '''
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,56 +10,15 @@ from astral.sun import sun
 from datetime import datetime, time
 import pytz
 
-# Define target date
-target_date: datetime = datetime.today()
-# target_date = datetime(2025, 2, 16)
-
-# Define twilight depression (angle below horizon for dawn/dusk calculation)
-twilight_depression = 6  # 6° = civil twilight
-
-# List available timezones
-# from astral import zoneinfo
-# print(zoneinfo.available_timezones())
-
-# Define location
-my_latitude: float = 42.22530
-my_longitude: float = -83.74567
-my_location_name: str = "Ann Arbor"
-my_region: str = "Michigan/USA"
-my_tz: str = "US/Eastern"
-
-# Create a location object
-location = LocationInfo(
-    my_location_name, 
-    my_region, 
-    my_tz, 
-    my_latitude, 
-    my_longitude
-)
-
-# Get timezone
-tz = pytz.timezone(location.timezone)
-
-# Get sunrise, sunset, and twilight times
-sun_info: dict = sun(location.observer, date=target_date, tzinfo=tz, dawn_dusk_depression=twilight_depression)
-
-print(f"tz = {tz}")
-print(f"date = {target_date.strftime('%Y-%m-%d')}")
-print(f"Sunrise: {sun_info['sunrise']}, Sunset: {sun_info['sunset']}")
-print(f"Dawn: {sun_info['dawn']}, Dusk: {sun_info['dusk']}")
-
-# Extract times
-times: dict = {
-    "midnight": datetime.strptime("00:00", "%H:%M").time(),
-    "noon": datetime.strptime("12:00", "%H:%M").time(),
-    "sunrise": sun_info['sunrise'].time(),
-    "sunset": sun_info['sunset'].time(),
-    "first_light": sun_info['dawn'].time(),
-    "last_light": sun_info['dusk'].time()
-}
-
-
 def time_to_angle(time: time) -> float:
+    '''
+    **Convert a time object to an angle in radians.**
+
+    :param time: A time object representing the time of day (hours and minutes).
+    :type time: time
+    :return: A float representing the angle in radians corresponding to the time of day.
+    :rtype: float
+    '''
     return (time.hour + time.minute / 60) / 24 * 2 * np.pi
 
 def _create_plot(
@@ -67,9 +26,32 @@ def _create_plot(
         location: LocationInfo, 
         target_date: datetime, 
         my_latitude: float, 
-        my_longitude: float
+        my_longitude: float,
+        sun_info: dict
     ) -> None:
+    '''
+    **Create a polar plot showing the daylight hours for the specified date and location.**
 
+    Uses the ***astral*** library to calculate the sunrise, sunset, and twilight times.
+
+    https://pypi.org/project/astral/
+
+    https://sffjunkie.github.io/astral/
+
+    :param times: A dictionary containing the times of the events shown in the plot (e.g., sunrise, sunset).
+    :type times: dict
+    :param location: A Location object containing information about the location (name, region, timezone, latitude, longitude).
+    :type location: LocationInfo
+    :param target_date: The date for which the plot is generated.
+    :type target_date: datetime
+    :param my_latitude: The latitude of the location (°).
+    :type my_latitude: float
+    :param my_longitude: The longitude of the location (°).
+    :type my_longitude: float
+    :param sun_info: A dictionary containing information about the sun events (e.g., sunrise, sunset, dawn, dusk).
+    :type sun_info: dict
+    '''
+    
     # Create polar plot
     fig, ax = plt.subplots(figsize=(7, 7), subplot_kw={'projection': 'polar'})
     ax = cast(PolarAxes, ax)  # Tell Pylance that ax is a PolarAxes
@@ -131,4 +113,66 @@ def _create_plot(
 
     plt.show()
 
-_create_plot(times, location, target_date, my_latitude, my_longitude)
+def main() -> None:
+    '''
+    **Main function for creating the daylight hours plot.**
+    '''
+
+    # TODO: obtain from user input
+    # Define target date
+    target_date: datetime = datetime.today()
+    # target_date = datetime(2025, 2, 16)
+
+    # Define twilight depression (angle below horizon for dawn/dusk calculation)
+    twilight_depression = 6  # 6° = civil twilight
+
+    # List available timezones
+    # from astral import zoneinfo
+    # print(zoneinfo.available_timezones())
+
+    # Define location
+    my_latitude: float = 42.22530
+    my_longitude: float = -83.74567
+    my_location_name: str = "Ann Arbor"
+    my_region: str = "Michigan/USA"
+    my_tz: str = "US/Eastern"
+
+    # Create a location object
+    location = LocationInfo(
+        my_location_name, 
+        my_region, 
+        my_tz, 
+        my_latitude, 
+        my_longitude
+    )
+
+    # Get timezone
+    tz = pytz.timezone(location.timezone)  # pytz timezone object - see https://pypi.org/project/pytz/
+
+    # Get sunrise, sunset, and twilight times
+    sun_info: dict = sun(location.observer, date=target_date, tzinfo=tz, dawn_dusk_depression=twilight_depression)
+
+    # Extract event times
+    times: dict = {
+        "midnight": datetime.strptime("00:00", "%H:%M").time(),
+        "noon": datetime.strptime("12:00", "%H:%M").time(),
+        "sunrise": sun_info['sunrise'].time(),
+        "sunset": sun_info['sunset'].time(),
+        "first_light": sun_info['dawn'].time(),
+        "last_light": sun_info['dusk'].time()
+    }
+
+    # Print information
+    print(f"Location: {location.name}")
+    print(f"TZ: {tz}")
+    print(f"Date: {target_date.strftime('%Y-%m-%d')}")
+    print(f"Sunrise: {sun_info['sunrise']}, Sunset: {sun_info['sunset']}")
+    print(f"Daylight hours: {sun_info['sunset'] - sun_info['sunrise']}")   
+    print(f"Dawn: {sun_info['dawn']}, Dusk: {sun_info['dusk']} (Twilight depression = {twilight_depression}°)")
+
+    # Create the plot
+    _create_plot(times, location, target_date, my_latitude, my_longitude, sun_info)
+
+
+if __name__ == "__main__":
+    main()
