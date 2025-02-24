@@ -150,8 +150,15 @@ def main() -> None:
     tz = pytz.timezone(location.timezone)  # pytz timezone object - see https://pypi.org/project/pytz/
 
     # Get sunrise, sunset, and twilight times
-    sun_info: dict = sun(location.observer, date=target_date, tzinfo=tz, dawn_dusk_depression=twilight_depression)
-
+    try:
+        sun_info: dict = sun(location.observer, date=target_date, tzinfo=tz, dawn_dusk_depression=twilight_depression)
+    except ValueError as e:
+        print(f"ValueError: {e}")
+        return  # Exit the function
+    except Exception as e:
+        print(f"Error: {e}")
+        return  # Exit the function
+    
     # Extract event times
     times: dict = {
         "midnight": datetime.strptime("00:00", "%H:%M").time(),
