@@ -58,11 +58,12 @@ times: dict = {
     "last_light": sun_info['dusk'].time()
 }
 
+
 # Convert time to polar angle (0:00 at top, 12:00 at bottom)
 def time_to_angle(time: time) -> float:
     return (time.hour + time.minute / 60) / 24 * 2 * np.pi
 
-def create_plot(
+def _create_plot(
         times: dict, 
         location: LocationInfo, 
         target_date: datetime, 
@@ -131,4 +132,4 @@ def create_plot(
 
     plt.show()
 
-create_plot(times, location, target_date, my_latitude, my_longitude)
+_create_plot(times, location, target_date, my_latitude, my_longitude)
