@@ -44,7 +44,7 @@ tz = pytz.timezone(location.timezone)
 sun_info: dict = sun(location.observer, date=target_date, tzinfo=tz, dawn_dusk_depression=twilight_depression)
 
 print(f"tz = {tz}")
-print(f"date = {target_date}")
+print(f"date = {target_date.strftime('%Y-%m-%d')}")
 print(f"Sunrise: {sun_info['sunrise']}, Sunset: {sun_info['sunset']}")
 print(f"Dawn: {sun_info['dawn']}, Dusk: {sun_info['dusk']}")
 
