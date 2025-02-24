@@ -59,7 +59,6 @@ times: dict = {
 }
 
 
-# Convert time to polar angle (0:00 at top, 12:00 at bottom)
 def time_to_angle(time: time) -> float:
     return (time.hour + time.minute / 60) / 24 * 2 * np.pi
 
