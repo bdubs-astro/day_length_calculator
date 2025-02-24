@@ -10,6 +10,17 @@ from astral.sun import sun
 from datetime import datetime
 import pytz
 
+# Define target date
+target_date = datetime.today()
+# target_date = datetime(2025, 2, 16)
+
+# Define twilight depression (angle below horizon for dawn/dusk calculation)
+twilight_depression = 6  # 6° = civil twilight
+
+# List available timezones
+# from astral import zoneinfo
+# print(zoneinfo.available_timezones())
+
 # Define location
 my_latitude: float = 42.22530
 my_longitude: float = -83.74567
@@ -17,6 +28,7 @@ my_location_name: str = "Ann Arbor"
 my_region: str = "Michigan/USA"
 my_tz: str = "US/Eastern"
 
+# Create a location object
 location = LocationInfo(
     my_location_name, 
     my_region, 
@@ -25,31 +37,25 @@ location = LocationInfo(
     my_longitude
 )
 
-# Define target date
-target_date = datetime.today()
-# target_date = datetime(2025, 2, 16)
-
-# List available timezones
-# from astral import zoneinfo
-# print(zoneinfo.available_timezones())
+# Get timezone
+tz = pytz.timezone(location.timezone)
 
 # Get sunrise, sunset, and twilight times
-tz = pytz.timezone(location.timezone)
-s = sun(location.observer, date=target_date, tzinfo=tz)
+sun_info: dict = sun(location.observer, date=target_date, tzinfo=tz, dawn_dusk_depression=twilight_depression)
 
 print(f"tz = {tz}")
 print(f"date = {target_date}")
-print(f"Sunrise: {s['sunrise']}, Sunset: {s['sunset']}")
-print(f"Dawn: {s['dawn']}, Dusk: {s['dusk']}")
+print(f"Sunrise: {sun_info['sunrise']}, Sunset: {sun_info['sunset']}")
+print(f"Dawn: {sun_info['dawn']}, Dusk: {sun_info['dusk']}")
 
 # Extract times
 times = {
     "midnight": datetime.strptime("00:00", "%H:%M").time(),
     "noon": datetime.strptime("12:00", "%H:%M").time(),
-    "sunrise": s['sunrise'].time(),
-    "sunset": s['sunset'].time(),
-    "first_light": s['dawn'].time(),
-    "last_light": s['dusk'].time()
+    "sunrise": sun_info['sunrise'].time(),
+    "sunset": sun_info['sunset'].time(),
+    "first_light": sun_info['dawn'].time(),
+    "last_light": sun_info['dusk'].time()
 }
 
 # Convert time to polar angle (0:00 at top, 12:00 at bottom)
@@ -107,12 +113,12 @@ date_str = target_date.strftime("%Y-%m-%d")  # Format: YYYY-MM-DD
 plt.title(f"{title_str} ({my_latitude:.3f}, {my_longitude:.3f}): {date_str}", pad=35, fontsize=16)
 
 # Display length of the day
-day_length = s['sunset'] - s['sunrise']
+day_length = sun_info['sunset'] - sun_info['sunrise']
 day_length_str = str(day_length).split('.')[0]
 
 # Display sunrise and sunset times
-sunrise_time_str = s['sunrise'].strftime("%H:%M")
-sunset_time_str = s['sunset'].strftime("%H:%M")
+sunrise_time_str = sun_info['sunrise'].strftime("%H:%M")
+sunset_time_str = sun_info['sunset'].strftime("%H:%M")
 
 # Add text annotations for sunrise and sunset
 plt.figtext(0.5, 0.01, f"Sunrise: {sunrise_time_str}    Sunset: {sunset_time_str}    Length of Day: {day_length_str}", ha='center', fontsize=12)
