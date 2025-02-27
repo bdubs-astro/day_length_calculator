@@ -1,0 +1,15 @@
+__pycache__/
+
+# ignore these folders
+bin/
+build/
+dist/
+myenv/
+venv/
+.venv/
+.vscode/
+
+# ignore these files
+*.md.bak
+test_data/info.log
+*.pptx
