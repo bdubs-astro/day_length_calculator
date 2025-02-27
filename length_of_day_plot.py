@@ -118,10 +118,17 @@ def main() -> None:
     **Main function for creating the daylight hours plot.**
     '''
 
-    # TODO: obtain from user input
-    # Define target date
-    target_date: datetime = datetime.today()
-    # target_date = datetime(2025, 2, 16)
+    # Get target date from user
+    user_input = input("Enter the target date (YYYY-MM-DD) or press Enter to use the current date: ").strip()
+    # Use today's date if input is empty
+    if user_input:
+        try:
+            target_date = datetime.strptime(user_input, "%Y-%m-%d")
+        except ValueError:
+            print("Invalid format! Using today's date instead.")
+            target_date = datetime.today()
+    else:
+        target_date = datetime.today()
 
     # Define twilight depression (angle below horizon for dawn/dusk calculation)
     twilight_depression = 6  # 6° = civil twilight
