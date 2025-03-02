@@ -97,9 +97,8 @@ class DayLengthCalculator(QMainWindow):
         menu = QMenu("Menu", self)
         self.menu_bar.addMenu(menu)
 
-        # select date action
+        # Select the date action
         select_date_action = QAction('Select date', self)
-        self.num_data_cols = 2
         select_date_action.setShortcut('Ctrl+D')
         select_date_action.setStatusTip('Select a date.')
         select_date_action.triggered.connect(self.select_date)
