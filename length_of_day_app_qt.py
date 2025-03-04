@@ -116,6 +116,9 @@ class LocationDialog(BaseDialog):
         self.lon_label = QLabel("Longitude:")
         self.lon_input = QLineEdit(str(self.longitude))  # Pre-fill with last or default
 
+        self.tz_label = QLabel("TZ Identifier:") # TODO: add show list to the menu  (https://en.m.wikipedia.org/wiki/List_of_tz_database_time_zones)
+        self.tz_input = QLineEdit(str(self.tz_str))  # Pre-fill with last or default
+
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.accept)
 
@@ -125,6 +128,8 @@ class LocationDialog(BaseDialog):
         layout.addWidget(self.lat_input)
         layout.addWidget(self.lon_label)
         layout.addWidget(self.lon_input)
+        layout.addWidget(self.tz_label)
+        layout.addWidget(self.tz_input)
         layout.addWidget(self.ok_button)
 
     def accept(self):
@@ -133,10 +138,15 @@ class LocationDialog(BaseDialog):
             LocationDialog.last_latitude = float(self.lat_input.text())
             LocationDialog.last_longitude = float(self.lon_input.text())
             LocationDialog.last_location_name = self.loc_input.text().strip()
-            LocationDialog.last_tz_str = self.tz_str
+            tz_str = self.tz_input.text().strip()
+            if tz_str not in pytz.all_timezones:
+                raise ValueError("Invalid timezone input.")
+            LocationDialog.last_tz_str = tz_str
             super().accept()
-        except ValueError:
-            QMessageBox.warning(self, "Input Error", "Please enter valid numeric values for latitude and longitude.")
+        except ValueError as e:
+            # QMessageBox.warning(self, "Input Error", str(e))
+            self.show_message(str(e), QMessageBox.Warning) # type: ignore
+
 
     def get_lat_lon(self):
         try:
@@ -289,8 +299,8 @@ class DayLengthCalculator(QMainWindow):
                 self.latitude = lat
                 self.longitude = lon
                 self.location_name = dialog.loc_input.text().strip()
-                self.region = "User-defined"
-                self.tz_str = "UTC"  # Adjust time zone logic as needed
+                self.region = ""
+                self.tz_str = dialog.tz_input.text().strip()
                 self.location = LocationInfo(
                     self.location_name, 
                     self.region, 
@@ -298,8 +308,7 @@ class DayLengthCalculator(QMainWindow):
                     self.latitude, 
                     self.longitude
                 )
-                self.tz = pytz.utc  # Adjust based on location if needed
-                # self.tz = pytz.timezone(self.location.timezone)  # pytz timezone object - see https://pypi.org/project/pytz/
+                self.tz = pytz.timezone(self.location.timezone)  # pytz timezone object - see https://pypi.org/project/pytz/
             else:
                 message = "Invalid latitude/longitude input."
                 self.show_message(message, QMessageBox.Warning)  # type: ignore
@@ -390,9 +399,9 @@ class DayLengthCalculator(QMainWindow):
         ax.plot(outer_circle, np.full_like(outer_circle, 1.05), color='black', linewidth=1.2)
 
         # Title
-        title_str = self.location.name[:15] + '...' if len(self.location.name) > 15 else self.location.name
+        loc_str = self.location.name[:13] + '...' if len(self.location.name) > 15 else self.location.name
         date_str = self.target_date.strftime("%m/%d/%Y")  # Format: MM/DD/YYYY
-        ax.set_title(f"{date_str}: {title_str} ({self.latitude:.3f}°, {self.longitude:.3f}°)", pad=35, fontsize=12)
+        ax.set_title(f"{date_str}: {loc_str} ({self.latitude:.3f}°, {self.longitude:.3f}°, TZ: {self.tz_str})", pad=35, fontsize=12)
 
         # Display length of the day
         day_length = self.sun_info['sunset'] - self.sun_info['sunrise']
