@@ -23,11 +23,11 @@ https://pytutorial.com/python-pytz-time-zone-handling-made-easy/
 
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QMessageBox, QVBoxLayout,
-    QWidget, QMenuBar, QMenu, QStatusBar, QLabel,
-    QDialog, QLineEdit, QPushButton, QDateEdit
+        QApplication, QMainWindow, QMessageBox, QVBoxLayout,
+        QWidget, QMenuBar, QMenu, QStatusBar, QLabel,
+        QDialog, QLineEdit, QPushButton, QDateEdit
 )
-from PySide6.QtCore import QDate
+from PySide6.QtCore import QDate, Qt
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -84,16 +84,17 @@ class LocationDialog(BaseDialog):
     last_latitude = None
     last_longitude = None
     last_tz_str = None
+    # TODO: add twilight depression angle as a parameter
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Select Location")
         self.setWindowIcon(QIcon(icon_fname))
-        self.setFixedSize(300, 200)
+        self.setFixedSize(300, 250)
 
         layout = QVBoxLayout(self)
 
-        # Default values (used only the first time)
+        # Default values (used only the first time through)
         default_location_name = "Ann Arbor" 
         default_latitude = 42.22530
         default_longitude = -83.74567
