@@ -59,7 +59,26 @@ def time_to_angle(time: time) -> float:
     return (time.hour + time.minute / 60) / 24 * 2 * np.pi
 
 
-class LocationDialog(QDialog):
+class BaseDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def show_message(self, message, icon_type):
+        msg_box = QMessageBox(self)
+        msg_box.setText(message)
+        msg_box.setIcon(icon_type)
+        msg_box.setWindowTitle("Day Length Calculator")
+        # Adjust the message box width dynamically 
+        msg_box.setMinimumWidth(80)  # Adjust width as needed
+        msg_box.setSizeGripEnabled(True)  # Allow resizing if needed
+        # Access the QLabel inside QMessageBox and set its minimum width
+        label = msg_box.findChild(QLabel, "qt_msgbox_label")
+        if label:
+            label.setMinimumWidth(125)  # Adjust based on message length   
+        msg_box.exec()
+
+
+class LocationDialog(BaseDialog):
     # Class attributes to retain last entered values
     last_location_name = None
     last_latitude = None
@@ -137,7 +156,7 @@ class LocationDialog(QDialog):
             return None, None
 
 
-class DateEntryDialog(QDialog):
+class DateEntryDialog(BaseDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Select Date")
@@ -235,6 +254,20 @@ class DayLengthCalculator(QMainWindow):
         exit_action.setStatusTip('Exit the application.')
         exit_action.triggered.connect(self.close)
         menu.addAction(exit_action)
+
+    def show_message(self, message, icon_type):
+        msg_box = QMessageBox(self)
+        msg_box.setText(message)
+        msg_box.setIcon(icon_type)
+        msg_box.setWindowTitle("Day Length Calculator")
+        # Adjust the message box width dynamically 
+        msg_box.setMinimumWidth(80)  # Adjust width as needed
+        msg_box.setSizeGripEnabled(True)  # Allow resizing if needed
+        # Access the QLabel inside QMessageBox and set its minimum width
+        label = msg_box.findChild(QLabel, "qt_msgbox_label")
+        if label:
+            label.setMinimumWidth(125)  # Adjust based on message length        
+        msg_box.exec()
 
     def select_date(self):
         dialog = DateEntryDialog()
@@ -373,13 +406,6 @@ class DayLengthCalculator(QMainWindow):
         self.figure.subplots_adjust(top=0.85, bottom=0.13, left=0.125, right=0.9, hspace=0.2, wspace=0.2)
 
         self.canvas.draw()
-
-    def show_message(self, message, icon_type):
-        msg_box = QMessageBox(self)
-        msg_box.setText(message)
-        msg_box.setIcon(icon_type)
-        msg_box.setWindowTitle("Day Length Calculator")
-        msg_box.exec()
 
 
 if __name__ == "__main__":
