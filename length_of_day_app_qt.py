@@ -322,12 +322,11 @@ class DayLengthCalculator(QMainWindow):
         
         # Extract event times
         self.times: dict = {
-            "midnight": datetime.strptime("00:00", "%H:%M").time(),
-            "noon": datetime.strptime("12:00", "%H:%M").time(),
+            "noon": self.sun_info['noon'].time(),            
             "sunrise": self.sun_info['sunrise'].time(),
             "sunset": self.sun_info['sunset'].time(),
-            "first_light": self.sun_info['dawn'].time(),
-            "last_light": self.sun_info['dusk'].time()
+            "dawn": self.sun_info['dawn'].time(),
+            "dusk": self.sun_info['dusk'].time()
     }
 
     def update_plot(self):
@@ -354,14 +353,18 @@ class DayLengthCalculator(QMainWindow):
 
         angles = {k: time_to_angle(v) for k, v in self.times.items()}
 
+        # add solar noon and midnight lines to the plot
+        ax.plot([angles['noon'], angles['noon']], [0, 1], color='white', linestyle=':', linewidth=2, alpha=0.8)
+        ax.plot([angles['noon'] + np.pi, angles['noon'] + np.pi], [0, 1], color='black', linestyle=':', linewidth=2, alpha=0.8)
+
         # Fill nighttime (dusk to dawn)
-        night_width = (angles['first_light'] - angles['last_light']) % full_circle
-        ax.bar(angles['last_light'], 1, width=night_width, color='darkblue', alpha=0.8, align='edge')
+        night_width = (angles['dawn'] - angles['dusk']) % full_circle
+        ax.bar(angles['dusk'], 1, width=night_width, color='darkblue', alpha=0.8, align='edge')
 
         # Fill twilight regions
-        twilight_width1 = (angles['sunrise'] - angles['first_light']) % full_circle
-        twilight_width2 = (angles['last_light'] - angles['sunset']) % full_circle
-        ax.bar(angles['first_light'], 1, width=twilight_width1, color='midnightblue', alpha=0.6, align='edge')
+        twilight_width1 = (angles['sunrise'] - angles['dawn']) % full_circle
+        twilight_width2 = (angles['dusk'] - angles['sunset']) % full_circle
+        ax.bar(angles['dawn'], 1, width=twilight_width1, color='midnightblue', alpha=0.6, align='edge')
         ax.bar(angles['sunset'], 1, width=twilight_width2, color='midnightblue', alpha=0.6, align='edge')
 
         # Fill daylight region (sunrise to sunset)
