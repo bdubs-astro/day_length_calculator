@@ -25,7 +25,8 @@ from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import (
         QApplication, QMainWindow, QMessageBox, QVBoxLayout,
         QWidget, QMenuBar, QMenu, QStatusBar, QLabel,
-        QDialog, QLineEdit, QPushButton, QDateEdit
+        QDialog, QLineEdit, QPushButton, QDateEdit,
+        QTableWidget, QTableWidgetItem
 )
 from PySide6.QtCore import QDate, Qt
 
@@ -78,13 +79,50 @@ class BaseDialog(QDialog):
         msg_box.exec()
 
 
+class TimeZoneDialog(BaseDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Selected Time Zones")
+        self.setFixedSize(300, 300)  # width, height
+
+        self.table = QTableWidget()
+
+        time_zones = [
+            ["UTC", "Europe/Paris", "Europe/London", "US/Eastern", "US/Central", "US/Mountain", "US/Arizona", "US/Pacific"],
+            ["0", "+1 / +2", "0 / +1", "-5 / -4", "-6 / -5", "-7 / -6", "-7 / -7", "-8 / -7"],
+            ["UTC", "CET / CEST", "GMT / BST", "EST / EDT", "CST / CDT", "MST / MDT", "MST", "PST / PDT"],
+        ]
+
+        # Set table size (number of rows and columns)
+        self.table.setRowCount(len(time_zones[0]))
+        self.table.setColumnCount(3)
+
+        self.table.setVerticalHeaderLabels([])  # Hide row numbers
+        self.table.verticalHeader().setVisible(False)
+        self.table.setHorizontalHeaderLabels(["Identifier", "GMT Offset", "Abbreviation"])
+        self.table.horizontalHeader().setVisible(True)
+
+        # Populate the table 
+        for col_idx, col in enumerate(time_zones):
+            for row_idx, tz in enumerate(col):
+                item = QTableWidgetItem(tz)
+                # Center align text in the second column
+                if col_idx == 1 or col_idx == 2:
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.table.setItem(row_idx, col_idx, item)
+        self.table.resizeColumnsToContents()
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.table, alignment=Qt.AlignmentFlag.AlignHCenter)
+        self.setLayout(layout)
+
+
 class LocationDialog(BaseDialog):
     # Class attributes to retain last entered values
     last_location_name = None
     last_latitude = None
     last_longitude = None
     last_tz_str = None
-    # TODO: add twilight depression angle as a parameter
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -116,7 +154,7 @@ class LocationDialog(BaseDialog):
         self.lon_label = QLabel("Longitude:")
         self.lon_input = QLineEdit(str(self.longitude))  # Pre-fill with last or default
 
-        self.tz_label = QLabel("TZ Identifier:") # TODO: add show list to the menu  (https://en.m.wikipedia.org/wiki/List_of_tz_database_time_zones)
+        self.tz_label = QLabel("TZ Identifier:")
         self.tz_input = QLineEdit(str(self.tz_str))  # Pre-fill with last or default
 
         self.ok_button = QPushButton("OK")
@@ -190,7 +228,8 @@ class DateEntryDialog(BaseDialog):
     def get_selected_date(self):
         qdate = self.date_edit.date()
         return datetime(qdate.year(), qdate.month(), qdate.day())
-    
+
+
 class DayLengthCalculator(QMainWindow):
 
     def __init__(self):
@@ -198,6 +237,7 @@ class DayLengthCalculator(QMainWindow):
         self.setWindowTitle("Day Length Calculator")
 
         self.target_date = None
+        self.location = None
         self.times = {}
 
         # Define twilight depression (angle below horizon for dawn/dusk calculation)
@@ -259,6 +299,13 @@ class DayLengthCalculator(QMainWindow):
         update_plot_action.triggered.connect(self.update_plot)
         menu.addAction(update_plot_action)
 
+        # Show time zones action
+        show_tz_action = QAction("Show time zones", self)
+        show_tz_action.setShortcut('Ctrl+Z')
+        show_tz_action.setStatusTip('Table containing selected time zones.')
+        show_tz_action.triggered.connect(self.show_time_zones)
+        menu.addAction(show_tz_action)
+
         # Exit action
         exit_action = QAction('Exit', self)
         exit_action.setShortcut('Ctrl+X')
@@ -279,6 +326,10 @@ class DayLengthCalculator(QMainWindow):
         if label:
             label.setMinimumWidth(125)  # Adjust based on message length        
         msg_box.exec()
+
+    def show_time_zones(self):
+        self.dialog = TimeZoneDialog(self)
+        self.dialog.exec()
 
     def select_date(self):
         dialog = DateEntryDialog()
@@ -315,6 +366,11 @@ class DayLengthCalculator(QMainWindow):
  
     def get_sun_info(self):
         # Get sunrise, sunset, and twilight times
+
+        if self.location is None:
+            self.show_message("No location selected.", QMessageBox.Warning) # type: ignore
+            return
+
         try:
             self.sun_info: dict = sun(
                 self.location.observer, 
@@ -340,9 +396,6 @@ class DayLengthCalculator(QMainWindow):
 
     def update_plot(self):
 
-        # Get sunrise, sunset, and twilight times
-        self.get_sun_info()
-
         if self.target_date is None:
             self.show_message("No date selected.", QMessageBox.Warning)  # type: ignore
             return
@@ -350,7 +403,15 @@ class DayLengthCalculator(QMainWindow):
         if self.location is None:
             self.show_message("No location selected.", QMessageBox.Warning) # type: ignore
             return
-        
+
+        # Get sunrise, sunset, and twilight times
+        self.get_sun_info()
+
+        # TODO: calculate twilight with 6, 12, and 18° depression angles
+
+        angles = {k: time_to_angle(v) for k, v in self.times.items()}
+
+        # construct plot
         self.figure.clear()
         ax = self.figure.add_subplot(111, projection='polar')
         ax = cast(PolarAxes, ax)
@@ -359,8 +420,6 @@ class DayLengthCalculator(QMainWindow):
 
         # Full circle for reference
         full_circle = 2 * np.pi
-
-        angles = {k: time_to_angle(v) for k, v in self.times.items()}
 
         # add solar noon and midnight lines to the plot
         ax.plot([angles['noon'], angles['noon']], [0, 1], color='white', linestyle=':', linewidth=2, alpha=0.8)
