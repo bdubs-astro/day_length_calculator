@@ -1,0 +1,9 @@
+# created by pipreqs
+astral==3.2
+matplotlib==3.10.1
+numpy==2.2.3
+PyInstaller==6.12.0  # added manaully
+PySide6==6.8.2.1
+PySide6_Addons==6.8.2.1
+PySide6_Essentials==6.8.2.1
+pytz==2025.1
