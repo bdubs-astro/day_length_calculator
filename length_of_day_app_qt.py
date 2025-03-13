@@ -235,10 +235,6 @@ class DayLengthCalculator(QMainWindow):
 
         self.target_date = None
         self.location = None
-        self.times = {}
-
-        # Define twilight depression (angle below horizon for dawn/dusk calculation)
-        self.twilight_depression = 6  # 6° = civil twilight
 
         # Set the icon
         if getattr(sys, 'frozen', False):  # If bundled with PyInstaller
@@ -361,7 +357,7 @@ class DayLengthCalculator(QMainWindow):
                 message = "Invalid latitude/longitude input."
                 self.show_message(message, QMessageBox.Warning)  # type: ignore
  
-    def get_sun_info(self):
+    def get_sun_info(self, twilight_depression: float):
         # Get sunrise, sunset, and twilight times
 
         if self.location is None:
@@ -371,10 +367,12 @@ class DayLengthCalculator(QMainWindow):
         try:
             self.sun_info: dict = sun(
                 self.location.observer, 
-                date=self.target_date, 
-                tzinfo=self.tz, 
-                dawn_dusk_depression=self.twilight_depression
+                date = self.target_date, 
+                tzinfo = self.tz, 
+                dawn_dusk_depression = twilight_depression
             )
+            # print(f"Sun info for depression angle {twilight_depression}: {self.sun_info}")  # ! Debug print
+
         except ValueError as e:
             print(f"ValueError: {e}")
             return  # Exit the function
@@ -382,15 +380,6 @@ class DayLengthCalculator(QMainWindow):
             print(f"Error: {e}")
             return  # Exit the function
         
-        # Extract event times
-        self.times: dict = {
-            "noon": self.sun_info['noon'].time(),            
-            "sunrise": self.sun_info['sunrise'].time(),
-            "sunset": self.sun_info['sunset'].time(),
-            "dawn": self.sun_info['dawn'].time(),
-            "dusk": self.sun_info['dusk'].time()
-    }
-
     def update_plot(self):
 
         if self.target_date is None:
@@ -401,12 +390,51 @@ class DayLengthCalculator(QMainWindow):
             self.show_message("No location selected.", QMessageBox.Warning) # type: ignore
             return
 
-        # Get sunrise, sunset, and twilight times
-        self.get_sun_info()
+        # Get sunrise, sunset, and solar noon times
+        self.get_sun_info(0)
 
-        # TODO: calculate twilight with 6, 12, and 18° depression angles
+        # Store in a dictionary
+        event_times = {
+            'noon': self.sun_info.get('noon', None),
+            'sunrise': self.sun_info.get('sunrise', None),
+            'sunset': self.sun_info.get('sunset', None),
+        }
 
-        angles = {k: time_to_angle(v) for k, v in self.times.items()}
+        # Get the different twilight times
+        depression_angles = {
+            "dusk_civil": 6,  # Civil twilight angle
+            "dusk_nautical": 12,  # Nautical twilight angle
+            "dusk_astro": 18,  # Astronomical twilight angle
+        }
+
+        # Loop through the depression angles and call get_sun_info() for each
+        twilight_times = {}
+        for twilight_type, depression in depression_angles.items():
+            self.get_sun_info(twilight_depression=depression)
+            
+            # Store the dawn and dusk times for the current twilight type
+            twilight_times[twilight_type] = {
+                'dawn': self.sun_info.get('dawn', None),
+                'dusk': self.sun_info.get('dusk', None)
+            }
+
+        # Combine the two dictionaries
+        sun_data = {**event_times, **twilight_times}
+
+        # Convert standard solar times (sunrise, sunset, noon) to angles
+        angles = {}
+        angles.update({k: time_to_angle(v.time()) for k, v in sun_data.items() if isinstance(v, datetime)})
+
+        # Convert twilight times and flatten keys (nested dictionaries)
+        for twilight_type, times in sun_data.items():
+            if isinstance(times, dict):  # Only process nested twilight dicts
+                for key, value in times.items():
+                    # Simplify the naming, using just the event (e.g., 'civil_dawn', 'civil_dusk')
+                    angles[f"{twilight_type.split('_')[1]}_{key}"] = time_to_angle(value.time())  # Extract time part from datetime
+
+        # print(twilight_times)  # ! debug print
+        # print(sun_data)  # ! debug print
+        # print(angles)  # ! debug print
 
         # construct plot
         self.figure.clear()
@@ -422,19 +450,33 @@ class DayLengthCalculator(QMainWindow):
         ax.plot([angles['noon'], angles['noon']], [0, 1], color='white', linestyle=':', linewidth=2, alpha=0.8)
         ax.plot([angles['noon'] + np.pi, angles['noon'] + np.pi], [0, 1], color='black', linestyle=':', linewidth=2, alpha=0.8)
 
-        # Fill nighttime (dusk to dawn)
-        night_width = (angles['dawn'] - angles['dusk']) % full_circle
-        ax.bar(angles['dusk'], 1, width=night_width, color='darkblue', alpha=0.8, align='edge')
+        fill_colors = ['gold', '#0073CF', '#0000CD', '#00008B', '#00004B'] 
 
-        # Fill twilight regions
-        twilight_width1 = (angles['sunrise'] - angles['dawn']) % full_circle
-        twilight_width2 = (angles['dusk'] - angles['sunset']) % full_circle
-        ax.bar(angles['dawn'], 1, width=twilight_width1, color='midnightblue', alpha=0.6, align='edge')
-        ax.bar(angles['sunset'], 1, width=twilight_width2, color='midnightblue', alpha=0.6, align='edge')
-
-        # Fill daylight region (sunrise to sunset)
+        # Fill daylight region
         daylight_width = (angles['sunset'] - angles['sunrise']) % full_circle
-        ax.bar(angles['sunrise'], 1, width=daylight_width, color='gold', alpha=0.8, align='edge')
+        ax.bar(angles['sunrise'], 1, width=daylight_width, color=fill_colors[0], alpha=0.8, align='edge')
+
+        # Fill civil twilight regions
+        civil_twilight_width_am = (angles['sunrise'] - angles['civil_dawn']) % full_circle
+        ax.bar(angles['civil_dawn'], 1, width=civil_twilight_width_am, color=fill_colors[1], alpha=0.6, align='edge')
+        civil_twilight_width_pm = (angles['civil_dusk'] - angles['sunset']) % full_circle
+        ax.bar(angles['sunset'], 1, width=civil_twilight_width_pm, color=fill_colors[1], alpha=0.6, align='edge')
+
+        # Fill nautical twilight regions
+        naut_twilight_width_am = (angles['civil_dawn'] - angles['nautical_dawn']) % full_circle
+        ax.bar(angles['nautical_dawn'], 1, width=naut_twilight_width_am, color=fill_colors[2], alpha=0.8, align='edge')
+        naut_twilight_width_pm = (angles['nautical_dusk'] - angles['civil_dusk']) % full_circle
+        ax.bar(angles['civil_dusk'], 1, width=naut_twilight_width_pm, color=fill_colors[2], alpha=0.8, align='edge')
+
+        # Fill astronomical twilight regions
+        astro_twilight_width_am = (angles['nautical_dawn'] - angles['astro_dawn']) % full_circle
+        ax.bar(angles['astro_dawn'], 1, width=astro_twilight_width_am, color=fill_colors[3], alpha=0.8, align='edge')
+        astro_twilight_width_pm = (angles['astro_dusk'] - angles['nautical_dusk']) % full_circle
+        ax.bar(angles['nautical_dusk'], 1, width=astro_twilight_width_pm, color=fill_colors[3], alpha=0.8, align='edge')
+
+        # Fill nighttime region
+        night_width = (angles['astro_dawn'] - angles['astro_dusk']) % full_circle
+        ax.bar(angles['astro_dusk'], 1, width=night_width, color=fill_colors[4], alpha=0.8, align='edge')
 
         # Set Hour Labels (24-hour format)
         hour_labels = [f"{h}:00" for h in range(24)]
