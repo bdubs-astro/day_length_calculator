@@ -158,16 +158,16 @@ class LocationDialog(BaseDialog):
         self.tz_str = LocationDialog.last_tz_str if LocationDialog.last_tz_str is not None else default_tz_str
 
         # Input fields
-        self.loc_label = QLabel("Location:")
+        self.loc_label = QLabel("Name")
         self.loc_input = QLineEdit(str(self.location_name))  # Pre-fill with last or default
 
-        self.lat_label = QLabel("Latitude:")
+        self.lat_label = QLabel("Latitude (°.dddd)")
         self.lat_input = QLineEdit(str(self.latitude))  # Pre-fill with last or default
 
-        self.lon_label = QLabel("Longitude:")
+        self.lon_label = QLabel("Longitude (°.dddd)")
         self.lon_input = QLineEdit(str(self.longitude))  # Pre-fill with last or default
 
-        self.tz_label = QLabel("TZ Identifier:")
+        self.tz_label = QLabel("TZ Identifier (see list ...)")
         self.tz_input = QLineEdit(str(self.tz_str))  # Pre-fill with last or default
 
         self.ok_button = QPushButton("OK")
