@@ -39,7 +39,7 @@ import numpy as np
 import sys
 import os
 from typing import cast
-from datetime import datetime, time
+from datetime import datetime
 import pytz
 from astral import LocationInfo
 from astral.sun import sun
@@ -48,16 +48,13 @@ from astral.sun import sun
 icon_fname = 'bw.ico'
 
 # TODO: move inside DayLengthCalculator class ???
-def time_to_angle(time: time) -> float:
+def time_to_angle(value):
     '''
     **Convert a time object to an angle in radians.**
-
-    :param time: A time object representing the time of day (hours and minutes).
-    :type time: time
-    :return: A float representing the angle in radians corresponding to the time of day.
-    :rtype: float
     '''
-    return (time.hour + time.minute / 60) / 24 * 2 * np.pi
+    if isinstance(value, dict):
+        return {k: time_to_angle(v) for k, v in value.items()}  # Recursively process dicts
+    return (value.hour + value.minute / 60) / 24 * 2 * np.pi
 
 
 class BaseDialog(QDialog):
