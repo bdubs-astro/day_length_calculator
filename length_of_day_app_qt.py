@@ -94,11 +94,12 @@ class BaseDialog(QDialog):
 class TimeZoneDialog(BaseDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Selected Time Zones")
+        self.setWindowTitle("Common Time Zones")
         self.setFixedSize(300, 300)  # width, height
 
         self.table = QTableWidget()
 
+        # data for the table
         time_zones = [
             ["UTC", "Europe/Paris", "Europe/London", "US/Eastern", "US/Central", "US/Mountain", "US/Arizona", "US/Pacific"],
             ["0", "+1 / +2", "0 / +1", "-5 / -4", "-6 / -5", "-7 / -6", "-7 / -7", "-8 / -7"],
