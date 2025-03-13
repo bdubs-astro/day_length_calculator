@@ -225,6 +225,7 @@ class DateEntryDialog(BaseDialog):
                        
         layout = QVBoxLayout(self)
 
+        # todo: add the ability to remember the last date entered instead of defaulting to current???
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setDate(QDate.currentDate())  # Set default date
@@ -299,6 +300,8 @@ class DayLengthCalculator(QMainWindow):
         select_location_action.setStatusTip('Select a location.')
         select_location_action.triggered.connect(self.select_location)
         menu.addAction(select_location_action)
+
+        # todo: add reset defaults action???
 
         # Update Plot action
         update_plot_action = QAction('Update plot', self)
