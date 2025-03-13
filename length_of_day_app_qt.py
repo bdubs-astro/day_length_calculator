@@ -61,18 +61,33 @@ class BaseDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-    def show_message(self, message, icon_type):
+    # todo: merge with version in DayLengthCalculator class ???
+    def show_message(self, message: str, icon_type: QMessageBox.Icon) -> None:
+        '''
+        **Display a message using the *QMessageBox* class.**
+
+        :param message: The text that appears in the box.
+        :type message: str
+        :param icon_type: The icon that appears in the box, *e.g.*, *QMessageBox.Warning*.
+        :type icon_type: QMessageBox.Icon
+        '''
         msg_box = QMessageBox(self)
         msg_box.setText(message)
         msg_box.setIcon(icon_type)
         msg_box.setWindowTitle("Day Length Calculator")
-        # Adjust the message box width dynamically 
-        msg_box.setMinimumWidth(80)  # Adjust width as needed
-        msg_box.setSizeGripEnabled(True)  # Allow resizing if needed
-        # Access the QLabel inside QMessageBox and set its minimum width
+
+        # Ensure text wraps properly
+        msg_box.setMinimumSize(300, 200)  # Adjust width/height as needed
+        msg_box.setSizeGripEnabled(True)  # Allow resizing
+     
+        # Adjust the QLabel inside the message box
         label = msg_box.findChild(QLabel, "qt_msgbox_label")
         if label:
-            label.setMinimumWidth(125)  # Adjust based on message length   
+            label.setMinimumWidth(200)
+            label.setWordWrap(True)
+            label.adjustSize()
+            msg_box.resize(max(label.sizeHint().width() + 50, 200), msg_box.height())
+
         msg_box.exec()
 
 
@@ -179,7 +194,6 @@ class LocationDialog(BaseDialog):
             LocationDialog.last_tz_str = tz_str
             super().accept()
         except ValueError as e:
-            # QMessageBox.warning(self, "Input Error", str(e))
             self.show_message(str(e), QMessageBox.Warning) # type: ignore
 
 
@@ -306,18 +320,32 @@ class DayLengthCalculator(QMainWindow):
         exit_action.triggered.connect(self.close)
         menu.addAction(exit_action)
 
-    def show_message(self, message, icon_type):
+    def show_message(self, message: str, icon_type: QMessageBox.Icon) -> None:
+        '''
+        **Display a message using the *QMessageBox* class.**
+
+        :param message: The text that appears in the box.
+        :type message: str
+        :param icon_type: The icon that appears in the box, *e.g.*, *QMessageBox.Warning*.
+        :type icon_type: QMessageBox.Icon
+        '''
         msg_box = QMessageBox(self)
         msg_box.setText(message)
         msg_box.setIcon(icon_type)
         msg_box.setWindowTitle("Day Length Calculator")
-        # Adjust the message box width dynamically 
-        msg_box.setMinimumWidth(80)  # Adjust width as needed
-        msg_box.setSizeGripEnabled(True)  # Allow resizing if needed
-        # Access the QLabel inside QMessageBox and set its minimum width
+
+        # Ensure text wraps properly
+        msg_box.setMinimumSize(300, 200)  # Adjust width/height as needed
+        msg_box.setSizeGripEnabled(True)  # Allow resizing
+     
+        # Adjust the QLabel inside the message box
         label = msg_box.findChild(QLabel, "qt_msgbox_label")
         if label:
-            label.setMinimumWidth(125)  # Adjust based on message length        
+            label.setMinimumWidth(200)
+            label.setWordWrap(True)
+            label.adjustSize()
+            msg_box.resize(max(label.sizeHint().width() + 50, 200), msg_box.height())
+
         msg_box.exec()
 
     def show_time_zones(self):
