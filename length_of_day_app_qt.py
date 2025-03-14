@@ -38,7 +38,7 @@ from matplotlib.projections.polar import PolarAxes
 import numpy as np
 import sys
 import os
-from typing import cast
+from typing import cast, Optional
 from datetime import datetime
 import pytz
 from astral import LocationInfo
@@ -136,7 +136,7 @@ class LocationDialog(BaseDialog):
     last_latitude = None
     last_longitude = None
     last_tz_str = None
-
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Select Location")
@@ -150,13 +150,13 @@ class LocationDialog(BaseDialog):
         default_latitude = 42.22530
         default_longitude = -83.74567
         default_tz_str = "US/Eastern"
-
+        
         # Use previous values if available, otherwise use defaults
         self.location_name = LocationDialog.last_location_name if LocationDialog.last_location_name is not None else default_location_name
         self.latitude = LocationDialog.last_latitude if LocationDialog.last_latitude is not None else default_latitude
         self.longitude = LocationDialog.last_longitude if LocationDialog.last_longitude is not None else default_longitude
         self.tz_str = LocationDialog.last_tz_str if LocationDialog.last_tz_str is not None else default_tz_str
-
+        
         # Input fields
         self.loc_label = QLabel("Name")
         self.loc_input = QLineEdit(str(self.location_name))  # Pre-fill with last or default
@@ -218,6 +218,8 @@ class LocationDialog(BaseDialog):
 
 
 class DateEntryDialog(BaseDialog):
+    last_date: Optional[QDate] = None  # Class attribute to retain last entered value
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Select Date")
@@ -225,18 +227,26 @@ class DateEntryDialog(BaseDialog):
                        
         layout = QVBoxLayout(self)
 
-        # todo: add the ability to remember the last date entered instead of defaulting to current???
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
-        self.date_edit.setDate(QDate.currentDate())  # Set default date
-        self.date_edit.setFixedWidth(150)  # Set a fixed width to make it compact
+    
+        # Use previous value if available, otherwise use current date
+        default_date = DateEntryDialog.last_date if DateEntryDialog.last_date is not None else QDate.currentDate()
+        self.date_edit.setDate(default_date)  # Set default date        
 
+        self.date_edit.setFixedWidth(150)  # Set a fixed width to make it compact
+        
         self.ok_button = QPushButton("OK")
-        self.ok_button.clicked.connect(self.accept)
+        self.ok_button.clicked.connect(self.on_accept)
 
         layout.addWidget(self.date_edit)
         layout.addWidget(self.ok_button)
         self.setLayout(layout)
+
+    def on_accept(self):
+        """Store selected date and close dialog."""
+        DateEntryDialog.last_date = self.date_edit.date()  # Store the selected date
+        self.accept()
 
     def get_selected_date(self):
         qdate = self.date_edit.date()
