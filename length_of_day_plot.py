@@ -169,7 +169,7 @@ def main() -> None:
     # Extract event times
     times: dict = {
         "midnight": datetime.strptime("00:00", "%H:%M").time(),
-        "noon": datetime.strptime("12:00", "%H:%M").time(),
+        "noon": datetime.strptime("12:00", "%H:%M").time(),  # TODO: sun_info.get('noon', None) ???
         "sunrise": sun_info['sunrise'].time(),
         "sunset": sun_info['sunset'].time(),
         "first_light": sun_info['dawn'].time(),
