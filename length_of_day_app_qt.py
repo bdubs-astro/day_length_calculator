@@ -551,15 +551,15 @@ class DayLengthCalculator(QMainWindow):
         sunrise_time_str = self.sun_info['sunrise'].strftime("%H:%M")
         sunset_time_str = self.sun_info['sunset'].strftime("%H:%M")
 
-        # Add text annotations for sunrise and sunset
-        self.figure.text(0.5, 0.02, f"Sunrise: {sunrise_time_str}    Sunset: {sunset_time_str}    Day Length: {day_length_str}", 
-            ha='center', fontsize=11)
-        
-        # todo: add the azimuth of the sunrise and sunset ???
+        # Display the azimuth of the sunrise and sunset points
         sunrise_azimuth = azimuth(self.location.observer, self.sun_info['sunrise'])
         sunset_azimuth = azimuth(self.location.observer, self.sun_info['sunset'])
-        print(f"Azimuth: sunrise {sunrise_azimuth:.1f}°, sunset {sunset_azimuth:.1f}°")  # ! Debug print
+        # print(f"Azimuth: sunrise {sunrise_azimuth:.2f}°, sunset {sunset_azimuth:.2f}°")  # ! Debug print
 
+        # Add text at the bottom of the plot
+        self.figure.text(0.5, 0.02, f"Sunrise: {sunrise_time_str} ({sunrise_azimuth:.0f}°)    Sunset: {sunset_time_str} ({sunset_azimuth:.0f}°)     Day Length: {day_length_str}", 
+            ha='center', fontsize=11)
+        
         # Apply plot layout adjustments
         self.figure.subplots_adjust(top=0.85, bottom=0.13, left=0.125, right=0.9, hspace=0.2, wspace=0.2)
 
