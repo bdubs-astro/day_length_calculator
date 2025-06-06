@@ -42,7 +42,7 @@ from typing import cast, Optional
 from datetime import datetime
 import pytz
 from astral import LocationInfo
-from astral.sun import sun
+from astral.sun import sun, azimuth
 
 # Icon filename
 icon_fname = 'bw.ico'
@@ -554,6 +554,11 @@ class DayLengthCalculator(QMainWindow):
         # Add text annotations for sunrise and sunset
         self.figure.text(0.5, 0.02, f"Sunrise: {sunrise_time_str}    Sunset: {sunset_time_str}    Day Length: {day_length_str}", 
             ha='center', fontsize=11)
+        
+        # todo: add the azimuth of the sunrise and sunset ???
+        sunrise_azimuth = azimuth(self.location.observer, self.sun_info['sunrise'])
+        sunset_azimuth = azimuth(self.location.observer, self.sun_info['sunset'])
+        print(f"Azimuth: sunrise {sunrise_azimuth:.1f}°, sunset {sunset_azimuth:.1f}°")  # ! Debug print
 
         # Apply plot layout adjustments
         self.figure.subplots_adjust(top=0.85, bottom=0.13, left=0.125, right=0.9, hspace=0.2, wspace=0.2)
