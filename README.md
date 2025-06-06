@@ -8,7 +8,7 @@ Solar noon is defined as the moment when the sun is at its highest point above t
 
 Finally, midnight is defined as the time when the sun is at its lowest point.
 
-The sunrise, sunset, and twilight times are calculated using the ***astral*** library.
+The sunrise, sunset, and twilight times, as well as the azimuth of the sunrise and sunset points are calculated using the ***astral*** library.
 
 https://pypi.org/project/astral/
 
@@ -16,7 +16,7 @@ https://sffjunkie.github.io/astral/
 
 ### Example
 
-<img src = "./files_for_documentation/gui_screenshot_2.png" width = "600"/> 
+<img src = "./files_for_documentation/gui_screenshot_3.png" width = "600"/> 
 
 <br> Use the ***Menu*** to select the date and location details, then update the plot. If any information is missing, the ***Update plot*** command will generate an error message. 
 
